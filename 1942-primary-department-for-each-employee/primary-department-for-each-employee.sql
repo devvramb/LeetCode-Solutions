@@ -1,12 +1,16 @@
 # Write your MySQL query statement below
-SELECT
-    employee_id,
-    department_id
-FROM Employee
-WHERE primary_flag = 'Y'
-   OR employee_id IN (
-       SELECT employee_id
-       FROM Employee
-       GROUP BY employee_id
-       HAVING COUNT(*) = 1
-   );
+With first as (Select
+e.employee_id,
+CASE
+    WHEN COUNT(employee_id) OVER (PARTITION BY employee_id) > 1
+         AND primary_flag = 'Y'
+    THEN department_id
+
+    WHEN COUNT(employee_id) OVER (PARTITION BY employee_id) = 1
+    THEN department_id
+END AS department_id
+from employee e )
+
+Select employee_id, department_id
+from first
+where department_id is not null
